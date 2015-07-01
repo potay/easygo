@@ -1,0 +1,12 @@
+{
+   "background": {
+      "scripts": [ "background.js" ]
+   },
+   "description": "Redirects stuff using webRequest",
+   "manifest_version": 2,
+   "minimum_chrome_version": "17",
+   "name": "easygo",
+   "permissions": [ "webRequest", "webRequestBlocking", "http://potay/*" ],
+   "update_url": "http://clients2.google.com/service/update2/crx",
+   "version": "0.1.1"
+}
