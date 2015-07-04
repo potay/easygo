@@ -1,6 +1,38 @@
 var submittest,
     dialog;
 
+var salert = function(thing) {
+  //alert(thing);
+}
+
+function updatePage() {
+  var entriesTable = document.getElementById('entries');
+  var currentEntries = entriesTable.children
+
+  while(currentEntries.length > 0) {
+    entriesTable.removeChild(currentEntries[0]);
+  }
+
+  chrome.storage.sync.get({'mapping': {}},
+    function(cache) {
+      for (pair in cache.mapping){
+        var entryRow = entriesTable.insertRow(0);
+        entryRow.id = pair;
+        var entryFromCell = entryRow.insertCell(0);
+        var entryToCell = entryRow.insertCell(1);
+        var entryDeleteCell = entryRow.insertCell(2);
+        entryFromCell.innerHTML = "http://"+pair+"/";
+        entryToCell.innerHTML = "http://"+cache.mapping[pair]+"/";
+        entryDeleteCell.innerHTML = "<a class=\"btn-floating waves-effect waves-light red\" value=\""+pair+"\" class=\"deleteEntry\"><i class=\"material-icons\">delete</i></a>";
+      }
+      deleteButtons = document.getElementsByClassName('deleteEntry');
+      for (i = 0; i < deleteButtons.length; i++) {
+        deleteButtons[i].addEventListener('click', generateDeleteEntryButton(deleteButtons[i].value));
+      }
+    }
+  );
+}
+
 function saveChanges() {
   var fromThing = document.getElementById("from");
   var toThing = document.getElementById("to");
@@ -13,47 +45,53 @@ function saveChanges() {
     return;
   }
   // Save it using the Chrome extension storage API.
-  chrome.storage.sync.set({'from': theFromValue, 'to': theToValue}, function() {
-    // Notify that we saved.
-    chrome.storage.sync.get(['from', 'to'], function(items) {
-      alert('Settings saved. New redirect: "'+items.from+'" -> "'+items.to+'"');
-    });
-  });
-} 
-
-function showNotify() {
-    var notify;
-
-    if (window.webkitNotifications.checkPermission() == 0) {
-        notify = window.webkitNotifications.createNotification(
-            "",
-            'Notification Test',
-            'This is a test of the Chrome Notification System. This is only a test.'
-        );
-        notify.show();
-    } else {
-        window.webkitNotifications.requestPermission();
+  chrome.storage.sync.get({'mapping': {}},
+    function(cache) {
+      var newMapping = cache.mapping;
+      newMapping[theFromValue] = theToValue;
+      chrome.storage.sync.set({'mapping': newMapping},
+        function() {
+          updatePage();
+          return;
+        }
+      );
     }
+  );
 }
 
-function showDialog(){
-    chrome.windows.create({
-        url: 'dialog.html',
-        width: 200,
-        height: 120,
-        type: 'popup'
-    });
-}    
+function deleteEntry(from) {
+  // Save it using the Chrome extension storage API.
+  chrome.storage.sync.get({'mapping': {}},
+    function(cache) {
+      var newMapping = cache.mapping;
+      delete newMapping[from];
+      chrome.storage.sync.set({'mapping': newMapping},
+        function() {
+          updatePage();
+          return;
+        }
+      );
+    }
+  );
+}
+
+function generateDeleteEntryButton(from) {
+  var deleteEntryButton = function() {
+    deleteEntry(from);
+  }
+  return deleteEntryButton;
+}
 
 function init() {
-    submitChanges = document.querySelector('#submitChanges');
-    dialog = document.querySelector('#dialog');
+  submitChanges = document.querySelector('#submitChanges');
+  submitChanges.addEventListener('click', saveChanges, false);
 
-    submitChanges.addEventListener('click', saveChanges, false);
-    dialog.addEventListener('click', showDialog, false);
-    
-    chrome.storage.sync.get(['from', 'to'], function(items) {
-      alert('Current redirect: "'+items.from+'" -> "'+items.to+'"');
-    });
-}    
+  updatePage();
+
+  // chrome.storage.sync.get(['from', 'to'], function(items) {
+  //   document.getElementById("from").value = items.from;
+  //   document.getElementById("to").value = items.to;
+  // });
+
+}
 document.addEventListener('DOMContentLoaded', init);

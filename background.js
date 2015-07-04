@@ -1,71 +1,67 @@
-var from, to;
+var currentCallbackDict = {};
 
-var thething = function (details) {
-      alert("hi again");
-      var result;
-      //var thing = "^http:\/\/"+from+"\/";
-      //var re = new RegExp(thing);
-      //alert(JSON.stringify([from, to, thing, {
-      //  redirectUrl:
-      //    info.url.replace(re,
-      //                     'http://'+to+'/')
-      //}]));
-      result = {
-        redirectUrl:
-          info.url.replace("http://asdasd.com/",
-                           'http://google.com/')
-      };
-      alert(JSON.stringify(result));
-      return result;
-    }
-
-chrome.storage.sync.get(['from', 'to'], function(items) {
-  alert("hi");
-  from = items.from;
-  to = items.to;
-  alert(from);
-  alert(to);
-
+function addRedirectListener(from, to) {
+  currentCallbackDict[from] = function (request) {
+    var re = new RegExp("^http:\/\/"+from+"\/");
+    return {
+      redirectUrl:
+        request.url.replace(re,
+          'http://'+to+'/')
+    };
+  }
   chrome.webRequest.onBeforeRequest.addListener(
-    thething,
+    currentCallbackDict[from],
     {
-      urls: [ "<all_urls>" ],
+      urls: [ "http:\/\/"+from+"\/*" ],
+      types: ["main_frame"],
     },
     [ "blocking" ]
   );
+}
 
-  alert(chrome.webRequest.onBeforeRequest.hasListener());
-
-  chrome.storage.onChanged.addListener(function(changes, namespace) {
-    //alert("hi again2");
-    for (key in changes) {
-      var storageChange = changes[key];
-      console.log('Storage key "%s" in namespace "%s" changed. ' +
-                  'Old value was "%s", new value is "%s".',
-      key,
-      namespace,
-      storageChange.oldValue,
-      storageChange.newValue);
-      if (key == "from") {
-        from = storageChange.newValue;
-      } else if (key == "to") {
-        to = storageChange.newValue;
+function startListening(fromList) {
+  fromList = fromList || []
+  chrome.storage.sync.get({"mapping": {}}, function (cache) {
+    if (fromList.length == 0){
+      for (pair in cache.mapping) {
+        addRedirectListener(pair, cache.mapping[pair]);
+      }
+    } else {
+      for (key in fromList) {
+        if (key in cache.mapping) {
+          addRedirectListener(key, cache.mapping[key]);
+        }
       }
     }
-    chrome.webRequest.onBeforeRequest.removeListener(
-      function () {
-        alert("delete?");
-        chrome.webRequest.onBeforeRequest.addListener(
-          thething,
-          {
-            urls: [ "<all_urls>" ],
-            types: ["main_frame"],
-          },
-          [ "blocking" ]
-        );
-      }
-    );
   });
-  alert("hi last");
+}
 
+function update(keys) {
+  keys = keys || []
+  if (keys.length > 0){
+    for (key in keys) {
+      if (key in currentCallbackDict && typeof currentCallbackDict[key] === "function") {
+        chrome.webRequest.onBeforeRequest.removeListener(currentCallbackDict[key]);
+        currentCallbackDict[key] = null;
+      }
+    }
+    startListening(keys);
+  } else {
+    for (key in currentCallbackDict) {
+      if (typeof currentCallbackDict[key] === "function") {
+        chrome.webRequest.onBeforeRequest.removeListener(currentCallbackDict[key]);
+        currentCallbackDict[key] = null;
+      }
+    }
+    startListening();
+  }
+}
+
+update();
+
+chrome.storage.onChanged.addListener(function(changes, namespace) {
+  var hasChanged = false;
+  if (namespace == "sync" && ("mapping" in changes)) {
+    update();
+  }
 });

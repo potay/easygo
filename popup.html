@@ -1,23 +1,14 @@
 <!doctype html>
-<!--
- This page is shown when the extension button is clicked, because the
- "browser_action" field in manifest.json contains the "default_popup" key with
- value "popup.html".
- -->
 <html>
   <head>
-    <title>Getting Started Extension's Popup</title>
+    <title>Easygo Settings</title>
+    <!--Import materialize.css-->
+    <link type="text/css" rel="stylesheet" href="static/css/materialize.min.css"  media="screen,projection"/>
+    <link type="text/css" rel="stylesheet" href="static/font/icon.css">
     <style>
       body {
-        font-family: "Segoe UI", "Lucida Grande", Tahoma, sans-serif;
+        font-family: "Roboto", sans-serif;
         font-size: 100%;
-      }
-      #status {
-        /* avoid an excessively wide status text */
-        white-space: pre;
-        text-overflow: ellipsis;
-        overflow: hidden;
-        max-width: 400px;
       }
     </style>
 
@@ -30,16 +21,68 @@
     <script src="popup.js"></script>
   </head>
   <body>
-    <div id="status"></div>
-    <img id="image-result" hidden>
-    <form>
-    <label for="from">From:</label>
-    <input type="text" name="from" id="from" value="">
-    <label for="to">To:</label>
-    <input type="text" name="to" id="to" value="">
-    <button type="button" id="submitChanges">hi</button>
-    <button type="button" id="dialog">Show Dialog</button>
+    <form style="margin-top: 10px;">
+      <div class="row">
+        <div class="col s12">
+          <div class="z-depth-1" style="padding-bottom: 10px;">
+            <div class="row blue darken-2 white-text" style="padding: 20px 0px;">
+              <div class="col s12 center-align">
+                <h5>Add New Redirect Rule</h5>
+              </div>
+            </div>
+            <div class="row valign-wrapper">
+              <div class="col s2 m1 valign right-align" style="height:100%;">
+                <h6 class="right-align"><b>http://</b></h6>
+              </div>
+              <div class="col s10 m11">
+                <div class="row" style="margin-bottom: 0px;">
+                  <div class="input-field col s12">
+                    <input type="text" placeholder="example" name="from" id="from" value="">
+                    <label for="from">From</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col s2 m1 valign right-align" style="height:100%;">
+                <h6 class="right-align"><b>http://</b></h6>
+              </div>
+              <div class="col s10 m11">
+                <div class="row" style="margin-bottom: 0px;">
+                  <div class="input-field col s12">
+                    <input type="text" placeholder="example.com" name="to" id="to" value="">
+                    <label for="to">To</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col s12 center-align">
+                <button class="btn waves-effect waves-light" type="submit" id="submitChanges"><i class="material-icons right">trending_flat</i>Add Redirect</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </form>
+    <div class="row">
+      <div class="col s12">
+        <table style="min-width: 600px">
+          <thead>
+            <tr>
+              <th data-field="from">From</th>
+              <th data-field="to">To</th>
+              <th data-field="delete">Delete</th>
+            </tr>
+          </thead>
+          <tbody id="entries"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!--Import jQuery before materialize.js-->
+    <script type="text/javascript" src="static/js/jquery.min.js"></script>
+    <script type="text/javascript" src="static/js/materialize.min.js"></script>
   </body>
 </html>
 
