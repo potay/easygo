@@ -23,11 +23,11 @@ function updatePage() {
         var entryDeleteCell = entryRow.insertCell(2);
         entryFromCell.innerHTML = "http://"+pair+"/";
         entryToCell.innerHTML = "http://"+cache.mapping[pair]+"/";
-        entryDeleteCell.innerHTML = "<a class=\"btn-floating waves-effect waves-light red\" value=\""+pair+"\" class=\"deleteEntry\"><i class=\"material-icons\">delete</i></a>";
+        entryDeleteCell.innerHTML = "<a class=\"btn-floating waves-effect waves-light red deleteEntry\" data-from=\""+pair+"\"><i class=\"material-icons\">delete</i></a>";
       }
       deleteButtons = document.getElementsByClassName('deleteEntry');
       for (i = 0; i < deleteButtons.length; i++) {
-        deleteButtons[i].addEventListener('click', generateDeleteEntryButton(deleteButtons[i].value));
+        deleteButtons[i].addEventListener('click', generateDeleteEntryButton(deleteButtons[i].dataset.from));
       }
     }
   );
@@ -87,11 +87,5 @@ function init() {
   submitChanges.addEventListener('click', saveChanges, false);
 
   updatePage();
-
-  // chrome.storage.sync.get(['from', 'to'], function(items) {
-  //   document.getElementById("from").value = items.from;
-  //   document.getElementById("to").value = items.to;
-  // });
-
 }
 document.addEventListener('DOMContentLoaded', init);
