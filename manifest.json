@@ -3,7 +3,6 @@
   "name": "EasyGo",
   "version": "0.2",
 
-  "default_locale": "en",
   "description": "Create custom url redirects rules.",
   "icons": {
     "16": "icons/icon16.png",
