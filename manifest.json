@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "EasyGo",
-  "version": "0.2",
+  "version": "0.3",
 
   "description": "Create custom url redirects rules.",
   "icons": {
@@ -31,5 +31,5 @@
     "<all_urls>"
   ],
   "short_name": "EasyGo",
-  "version_name": "0.2 alpha",
+  "version_name": "0.3 alpha",
 }
