@@ -16,14 +16,12 @@
 
   "author": "Paul Chun",
   "background": {
-    "scripts": [ "background.js" ],
-    "persistent": false
+    "scripts": [ "background.js" ]
   },
   "homepage_url": "http://paulchun.com",
   "incognito": "spanning",
   "minimum_chrome_version": "17",
   "offline_enabled": true,
-  "options_page": "popup.html",
   "permissions": [
     "storage",
     "webRequest",
@@ -31,5 +29,5 @@
     "<all_urls>"
   ],
   "short_name": "EasyGo",
-  "version_name": "0.3 alpha",
+  "version_name": "0.3 alpha"
 }
