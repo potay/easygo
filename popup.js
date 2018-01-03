@@ -1,132 +1,136 @@
-var submittest,
-    dialog;
+let tableCount = 0;
 
 var salert = function(thing) {
   //alert(thing);
 }
 
-function updatePage(pairDict, type) {
-  var entriesTable = document.getElementById('entries');
-  var currentEntries = entriesTable.children;
+function getChildID(key) {
+  return `entry_${key}`;
+}
 
-  console.log(pairDict);
+function getChildEntry(key) {
+  return document.getElementById(getChildID(key));
+}
 
-  if (pairDict == undefined) {
+function getTable() {
+  return document.getElementById('entries');
+}
 
-    while(currentEntries.length > 0) {
-      entriesTable.removeChild(currentEntries[0]);
-    }
+function getTableEntries() {
+  return getTable().children;
+}
 
-    chrome.storage.sync.get({'mapping': {}},
-      function(cache) {
-        var pairs = Object.keys(cache.mapping).sort()
-        console.log(pairs);
-        for (i in pairs){
-          var pair = pairs[i];
-          var entryRow = entriesTable.insertRow(-1);
-          entryRow.id = "entry_"+pair;
-          var entryFromCell = entryRow.insertCell(0);
-          var entryToCell = entryRow.insertCell(1);
-          var entryDeleteCell = entryRow.insertCell(2);
-          entryFromCell.innerHTML = "http://"+pair+"/";
-          entryToCell.innerHTML = "http://"+cache.mapping[pair]+"/";
-          entryDeleteCell.innerHTML = "<a class=\"btn-floating waves-effect waves-light red deleteEntry\" data-from=\""+pair+"\"><i class=\"material-icons\">delete</i></a>";
-        }
-        deleteButtons = document.getElementsByClassName('deleteEntry');
-        for (i = 0; i < deleteButtons.length; i++) {
-          deleteButtons[i].addEventListener('click', generateDeleteEntryButton(deleteButtons[i].dataset.from));
-        }
-      }
-    );
-  } else {
-    console.log(type);
-    if (type == "delete") {
-      var childEntry = document.getElementById('entry_'+pairDict.from);
-      entriesTable.removeChild(childEntry);
-    } else if (type == "add") {
-      if (pairDict.repeat) {
-        var childEntry = document.getElementById('entry_'+pairDict.from);
-        entriesTable.removeChild(childEntry);
-      }
-      var entryRow = entriesTable.insertRow(pairDict.i);
-      entryRow.id = "entry_"+pairDict.from;
-      var entryFromCell = entryRow.insertCell(0);
-      var entryToCell = entryRow.insertCell(1);
-      var entryDeleteCell = entryRow.insertCell(2);
-      entryFromCell.innerHTML = "http://"+pairDict.from+"/";
-      entryToCell.innerHTML = "http://"+pairDict.to+"/";
-      entryDeleteCell.innerHTML = "<a class=\"btn-floating waves-effect waves-light red deleteEntry\" data-from=\""+pairDict.from+"\"><i class=\"material-icons\">delete</i></a>";
-
-      deleteButtons = document.getElementsByClassName('deleteEntry');
-      for (i = 0; i < deleteButtons.length; i++) {
-        deleteButtons[i].addEventListener('click', generateDeleteEntryButton(deleteButtons[i].dataset.from));
-      }
-    }
+function tableRemoveEntry(key) {
+  getTable().removeChild(getChildEntry(key));
+  tableCount--;
+  if (tableCount == 0) {
+    tableAddEmptyMessage();
   }
 }
 
-function saveChanges() {
-  var fromThing = document.getElementById("from");
-  var toThing = document.getElementById("to");
-  // Get a value saved in a form.
-  var theFromValue = fromThing.value;
-  var theToValue = toThing.value;
-  // Check that there's some code there.
-  if (!theFromValue || !theToValue) {
+function tableRemoveAllEntries() {
+  const table = getTable();
+  const tableEntries = getTableEntries();
+  [].forEach.call(tableEntries, (entry) => table.removeChild(entry));
+  tableCount = 0;
+  tableAddEmptyMessage();
+}
+
+function tableAddEntry(key, position, from, to) {
+  if (tableCount == 0) {
+    tableRemoveEmptyMessage();
+  }
+  tableCount++;
+  const table = getTable();
+  const entryRow = table.insertRow(position);
+  entryRow.id = getChildID(key);
+  const entryFromCell = entryRow.insertCell(0);
+  const entryToCell = entryRow.insertCell(1);
+  const entryRemoveCell = entryRow.insertCell(2);
+  entryFromCell.innerHTML = `http://${from}/`;
+  entryToCell.innerHTML = `http://${to}/`;
+  entryRemoveButton = document.createElement("a");
+  entryRemoveButton.className = "btn-floating waves-effect waves-light red removeEntry";
+  entryRemoveButton.setAttribute("data-key", from);
+  entryRemoveButton.innerHTML = "<i class=\"material-icons\">delete</i>";
+  tableInitDeleteButton(entryRemoveButton, from);
+  entryRemoveCell.appendChild(entryRemoveButton);
+}
+
+function tableInitDeleteButton(button, key) {
+  button.addEventListener('click', () => removeEntry(key));
+}
+
+function tableAddEmptyMessage() {
+  const table = getTable();
+  const messageRow = table.insertRow(-1);
+  messageRow.id = "table-empty-message";
+  const messageCell = messageRow.insertCell(0);
+  messageCell.colSpan = 3;
+  messageCell.style.textAlign = "center";
+  messageCell.innerHTML = "You have no rules.";
+}
+
+function tableRemoveEmptyMessage() {
+  getTable().removeChild(document.getElementById("table-empty-message"));
+}
+
+function updatePage(entry, type) {
+  if (entry != undefined) {
+    switch (type) {
+      case "remove":
+        tableRemoveEntry(entry.key);
+        break;
+      case "add":
+        if (entry.exists) {
+          tableRemoveEntry(entry.key);
+        }
+        tableAddEntry(entry.key, entry.position, entry.from, entry.to);
+        break;
+      default:
+    }
+  } else {
+    tableRemoveAllEntries();
+    chrome.storage.sync.get({'mapping': {}}, (cache) => {
+      const mapKeys = Object.keys(cache.mapping).sort();
+      mapKeys.forEach((key) => tableAddEntry(key, -1, key, cache.mapping[key]));
+    });
+  }
+}
+
+function addEntry() {
+  const from = document.getElementById("newEntry-from").value;
+  const to = document.getElementById("newEntry-to").value;
+
+  if (!from || !to) {
     alert('Error: No value specified');
     return;
   }
+
   // Save it using the Chrome extension storage API.
-  chrome.storage.sync.get({'mapping': {}},
-    function(cache) {
-      var newMapping = cache.mapping;
-      if (theFromValue in newMapping) {
-        var repeat = true;
-        newMapping[theFromValue] = theToValue;
-        var i = Object.keys(newMapping).sort().indexOf(theFromValue);
-      } else {
-        var repeat = false;
-        newMapping[theFromValue] = theToValue;
-        var i = Object.keys(newMapping).sort().indexOf(theFromValue);
-      }
-      chrome.storage.sync.set({'mapping': newMapping},
-        function() {
-          updatePage({'from': theFromValue, 'to': theToValue, 'i': i, 'repeat': repeat}, "add");
-          return;
-        }
-      );
+  chrome.storage.sync.get({'mapping': {}}, (cache) => {
+      const mapping = cache.mapping;
+      const exists = (from in mapping);
+      mapping[from] = to;
+      const position = Object.keys(mapping).sort().indexOf(from);
+      chrome.storage.sync.set({'mapping': mapping}, () => updatePage({'key': from, 'from': from, 'to': to, 'position': position, 'exists': exists}, "add"));
     }
   );
 }
 
-function deleteEntry(from) {
+function removeEntry(key) {
   // Save it using the Chrome extension storage API.
-  chrome.storage.sync.get({'mapping': {}},
-    function(cache) {
-      var newMapping = cache.mapping;
-      var to = cache.mapping[from];
-      delete newMapping[from];
-      chrome.storage.sync.set({'mapping': newMapping},
-        function() {
-          updatePage({'from': from, 'to': to}, "delete");
-          return;
-        }
-      );
-    }
-  );
+  chrome.storage.sync.get({'mapping': {}}, (cache) => {
+    const mapping = cache.mapping;
+    const to = cache.mapping[key];
+    delete mapping[key];
+    chrome.storage.sync.set({'mapping': mapping}, () => updatePage({'key': key}, "remove"));
+  });
 }
 
-function generateDeleteEntryButton(from) {
-  var deleteEntryButton = function() {
-    deleteEntry(from);
-  }
-  return deleteEntryButton;
-}
-
-function init() {
-  submitChanges = document.querySelector('#submitChanges');
-  submitChanges.addEventListener('click', saveChanges, false);
+document.addEventListener('DOMContentLoaded', () => {
+  const submitChanges = document.querySelector('#submitChanges');
+  submitChanges.addEventListener('click', addEntry, false);
 
   updatePage();
-}
-document.addEventListener('DOMContentLoaded', init);
+});

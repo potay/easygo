@@ -4,7 +4,7 @@
     <title>Easygo Settings</title>
     <!--Import materialize.css-->
     <link type="text/css" rel="stylesheet" href="static/css/materialize.min.css"  media="screen,projection"/>
-    <link type="text/css" rel="stylesheet" href="static/font/icon.css">
+    <link type="text/css" rel="stylesheet" href="static/fonts/icon.css">
     <style>
       body {
         font-family: "Roboto", sans-serif;
@@ -12,12 +12,6 @@
       }
     </style>
 
-    <!--
-      - JavaScript and HTML must be in separate files: see our Content Security
-      - Policy documentation[1] for details and explanation.
-      -
-      - [1]: https://developer.chrome.com/extensions/contentSecurityPolicy
-     -->
     <script src="popup.js"></script>
   </head>
   <body>
@@ -37,7 +31,7 @@
               <div class="col s10 m11">
                 <div class="row" style="margin-bottom: 0px;">
                   <div class="input-field col s12">
-                    <input type="text" placeholder="example" name="from" id="from" value="">
+                    <input type="text" placeholder="example" name="from" id="newEntry-from" value="">
                     <label for="from">From</label>
                   </div>
                 </div>
@@ -50,7 +44,7 @@
               <div class="col s10 m11">
                 <div class="row" style="margin-bottom: 0px;">
                   <div class="input-field col s12">
-                    <input type="text" placeholder="example.com" name="to" id="to" value="">
+                    <input type="text" placeholder="example.com" name="to" id="newEntry-to" value="">
                     <label for="to">To</label>
                   </div>
                 </div>
@@ -80,8 +74,6 @@
       </div>
     </div>
 
-    <!--Import jQuery before materialize.js-->
-    <script type="text/javascript" src="static/js/jquery.min.js"></script>
     <script type="text/javascript" src="static/js/materialize.min.js"></script>
   </body>
 </html>
