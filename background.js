@@ -13,10 +13,10 @@ function addRedirectListener(from, to, https) {
   chrome.webRequest.onBeforeRequest.addListener(
     callbackDict[from],
     {
-      urls: ["http:\/\/"+from+"\/*"],
-      types: ["main_frame"],
+      urls: ['http:\/\/'+ from + '\/*'],
+      types: ['main_frame'],
     },
-    [ "blocking" ]
+    ['blocking']
   );
 }
 

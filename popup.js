@@ -9,7 +9,7 @@ function getChildEntry(key) {
 }
 
 function getTable() {
-  return document.getElementById("entries");
+  return document.getElementById('entries');
 }
 
 function getTableEntries() {
@@ -46,40 +46,40 @@ function tableAddEntry(key, position, from, to, https) {
   const entryRemoveCell = entryRow.insertCell(3);
   entryFromCell.innerHTML = `http://${from}/`;
   entryToCell.innerHTML = `http${https ? "s" : ""}://${to}/`;
-  entrySSLCell.innerHTML = https ? "<i class=\"material-icons\">check</i>" : "";
-  const entryRemoveButton = document.createElement("a");
-  entryRemoveButton.className = "btn-floating waves-effect waves-light red removeEntry";
-  entryRemoveButton.setAttribute("data-key", from);
-  entryRemoveButton.innerHTML = "<i class=\"material-icons\">delete</i>";
+  entrySSLCell.innerHTML = https ? '<i class=\"material-icons\">check</i>' : '';
+  const entryRemoveButton = document.createElement('a');
+  entryRemoveButton.className = 'btn-floating waves-effect waves-light red removeEntry';
+  entryRemoveButton.setAttribute('data-key', from);
+  entryRemoveButton.innerHTML = '<i class=\"material-icons\">delete</i>';
   tableInitDeleteButton(entryRemoveButton, from);
   entryRemoveCell.appendChild(entryRemoveButton);
 }
 
 function tableInitDeleteButton(button, key) {
-  button.addEventListener("click", () => removeEntry(key));
+  button.addEventListener('click', () => removeEntry(key));
 }
 
 function tableAddEmptyMessage() {
   const table = getTable();
   const messageRow = table.insertRow(-1);
-  messageRow.id = "table-empty-message";
+  messageRow.id = 'table-empty-message';
   const messageCell = messageRow.insertCell(0);
   messageCell.colSpan = 3;
-  messageCell.style.textAlign = "center";
-  messageCell.innerHTML = "You have no rules.";
+  messageCell.style.textAlign = 'center';
+  messageCell.innerHTML = 'You have no rules.';
 }
 
 function tableRemoveEmptyMessage() {
-  getTable().removeChild(document.getElementById("table-empty-message"));
+  getTable().removeChild(document.getElementById('table-empty-message'));
 }
 
 function updatePage(entry, type) {
   if (entry !== undefined) {
     switch (type) {
-      case "remove":
+      case 'remove':
         tableRemoveEntry(entry.key);
         break;
-      case "add":
+      case 'add':
         if (entry.exists) {
           tableRemoveEntry(entry.key);
         }
@@ -88,7 +88,7 @@ function updatePage(entry, type) {
     }
   } else {
     tableRemoveAllEntries();
-    chrome.storage.sync.get({"mapping": {}}, (cache) => {
+    chrome.storage.sync.get({'mapping': {}}, (cache) => {
       const mapKeys = Object.keys(cache.mapping).sort();
       mapKeys.forEach((key) => tableAddEntry(key, -1, key, cache.mapping[key].to, cache.mapping[key].https));
     });
