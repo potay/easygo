@@ -6,7 +6,7 @@ function addRedirectListener(from, to, https) {
     return {
       redirectUrl:
         request.url.replace(re,
-          `http${(https ? 's' : '')}://${to}/`)
+          `http${(https ? "s" : "")}://${to}/`)
     };
   };
 
@@ -21,10 +21,10 @@ function addRedirectListener(from, to, https) {
 }
 
 function startListening(fromList) {
-  fromList = fromList || []
+  fromList = fromList || [];
   chrome.storage.sync.get({"mapping": {}}, (cache) => {
     if (fromList.length == 0) {
-      for (from in cache.mapping) {
+      for (const from in cache.mapping) {
         addRedirectListener(from, cache.mapping[from].to, cache.mapping[from].https);
       }
     } else {
@@ -48,7 +48,7 @@ function update(fromList) {
     });
     startListening(fromList);
   } else {
-    for (from in callbackDict) {
+    for (const from in callbackDict) {
       if (typeof callbackDict[from] === "function") {
         chrome.webRequest.onBeforeRequest.removeListener(callbackDict[from]);
         callbackDict[from] = null;
@@ -65,11 +65,11 @@ function upgradeStorage(version, doneFn) {
       chrome.storage.sync.get({"mapping": {}}, (cache) => {
         const mapping = cache.mapping;
         const newMapping = {};
-        for (from in mapping) {
+        for (const from in mapping) {
           const to = mapping[from];
           newMapping[from] = {
-            'to': to,
-            'https': false,
+            "to": to,
+            "https": false,
           };
         }
         chrome.storage.sync.set({"mapping": newMapping}, () => doneFn());
@@ -88,7 +88,7 @@ function start() {
   });
 }
 
-function init(initFn) {
+function init() {
   chrome.storage.sync.get({"easygoVersion": null}, (cache) => {
     const currentVersion = chrome.runtime.getManifest().version;
     if (!cache.easygoVersion || cache.easygoVersion != currentVersion) {
