@@ -1,18 +1,19 @@
-var currentCallbackDict = {};
+const callbackDict = {};
 
-function addRedirectListener(from, to) {
-  currentCallbackDict[from] = function (request) {
-    var re = new RegExp("^http:\/\/"+from+"\/");
+function addRedirectListener(from, to, https) {
+  callbackDict[from] = (request) => {
+    const re = new RegExp(`^http:\/\/${from}\/`);
     return {
       redirectUrl:
         request.url.replace(re,
-          'http://'+to+'/')
+          `http${(https ? 's' : '')}://${to}/`)
     };
-  }
+  };
+
   chrome.webRequest.onBeforeRequest.addListener(
-    currentCallbackDict[from],
+    callbackDict[from],
     {
-      urls: [ "http:\/\/"+from+"\/*" ],
+      urls: ["http:\/\/"+from+"\/*"],
       types: ["main_frame"],
     },
     [ "blocking" ]
@@ -21,47 +22,82 @@ function addRedirectListener(from, to) {
 
 function startListening(fromList) {
   fromList = fromList || []
-  chrome.storage.sync.get({"mapping": {}}, function (cache) {
-    if (fromList.length == 0){
-      for (pair in cache.mapping) {
-        addRedirectListener(pair, cache.mapping[pair]);
+  chrome.storage.sync.get({"mapping": {}}, (cache) => {
+    if (fromList.length == 0) {
+      for (from in cache.mapping) {
+        addRedirectListener(from, cache.mapping[from].to, cache.mapping[from].https);
       }
     } else {
-      for (key in fromList) {
-        if (key in cache.mapping) {
-          addRedirectListener(key, cache.mapping[key]);
+      fromList.forEach((from) => {
+        if (from in cache.mapping) {
+          addRedirectListener(from, cache.mapping[from].to, cache.mapping[from].https);
         }
-      }
+      });
     }
   });
 }
 
-function update(keys) {
-  keys = keys || []
-  if (keys.length > 0){
-    for (key in keys) {
-      if (key in currentCallbackDict && typeof currentCallbackDict[key] === "function") {
-        chrome.webRequest.onBeforeRequest.removeListener(currentCallbackDict[key]);
-        currentCallbackDict[key] = null;
+function update(fromList) {
+  fromList = fromList || [];
+  if (fromList.length > 0){
+    fromList.forEach((from) => {
+      if (from in callbackDict && typeof callbackDict[from] === "function") {
+        chrome.webRequest.onBeforeRequest.removeListener(callbackDict[from]);
+        callbackDict[from] = null;
       }
-    }
-    startListening(keys);
+    });
+    startListening(fromList);
   } else {
-    for (key in currentCallbackDict) {
-      if (typeof currentCallbackDict[key] === "function") {
-        chrome.webRequest.onBeforeRequest.removeListener(currentCallbackDict[key]);
-        currentCallbackDict[key] = null;
+    for (from in callbackDict) {
+      if (typeof callbackDict[from] === "function") {
+        chrome.webRequest.onBeforeRequest.removeListener(callbackDict[from]);
+        callbackDict[from] = null;
       }
     }
     startListening();
   }
 }
 
-update();
-
-chrome.storage.onChanged.addListener(function(changes, namespace) {
-  var hasChanged = false;
-  if (namespace == "sync" && ("mapping" in changes)) {
-    update();
+function upgradeStorage(version, doneFn) {
+  switch (version) {
+    case null:
+    case "0.3":
+      chrome.storage.sync.get({"mapping": {}}, (cache) => {
+        const mapping = cache.mapping;
+        const newMapping = {};
+        for (from in mapping) {
+          const to = mapping[from];
+          newMapping[from] = {
+            'to': to,
+            'https': false,
+          };
+        }
+        chrome.storage.sync.set({"mapping": newMapping}, () => doneFn());
+      });
+      break;
+    default:
   }
-});
+}
+
+function start() {
+  update();
+  chrome.storage.onChanged.addListener((changes, namespace) => {
+    if (namespace == "sync" && ("mapping" in changes)) {
+      update();
+    }
+  });
+}
+
+function init(initFn) {
+  chrome.storage.sync.get({"easygoVersion": null}, (cache) => {
+    const currentVersion = chrome.runtime.getManifest().version;
+    if (!cache.easygoVersion || cache.easygoVersion != currentVersion) {
+      upgradeStorage(cache.easygoVersion, () => start());
+      chrome.storage.sync.set({"easygoVersion": currentVersion});
+    } else {
+      start();
+    }
+  });
+}
+
+init();

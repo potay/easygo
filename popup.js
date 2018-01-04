@@ -1,9 +1,5 @@
 let tableCount = 0;
 
-var salert = function(thing) {
-  //alert(thing);
-}
-
 function getChildID(key) {
   return `entry_${key}`;
 }
@@ -36,7 +32,7 @@ function tableRemoveAllEntries() {
   tableAddEmptyMessage();
 }
 
-function tableAddEntry(key, position, from, to) {
+function tableAddEntry(key, position, from, to, https) {
   if (tableCount == 0) {
     tableRemoveEmptyMessage();
   }
@@ -46,9 +42,11 @@ function tableAddEntry(key, position, from, to) {
   entryRow.id = getChildID(key);
   const entryFromCell = entryRow.insertCell(0);
   const entryToCell = entryRow.insertCell(1);
-  const entryRemoveCell = entryRow.insertCell(2);
+  const entrySSLCell = entryRow.insertCell(2);
+  const entryRemoveCell = entryRow.insertCell(3);
   entryFromCell.innerHTML = `http://${from}/`;
-  entryToCell.innerHTML = `http://${to}/`;
+  entryToCell.innerHTML = `http${https ? 's' : ''}://${to}/`;
+  entrySSLCell.innerHTML = https ? '<i class=\"material-icons\">check</i>' : '';
   entryRemoveButton = document.createElement("a");
   entryRemoveButton.className = "btn-floating waves-effect waves-light red removeEntry";
   entryRemoveButton.setAttribute("data-key", from);
@@ -85,7 +83,7 @@ function updatePage(entry, type) {
         if (entry.exists) {
           tableRemoveEntry(entry.key);
         }
-        tableAddEntry(entry.key, entry.position, entry.from, entry.to);
+        tableAddEntry(entry.key, entry.position, entry.from, entry.to, entry.https);
         break;
       default:
     }
@@ -93,7 +91,7 @@ function updatePage(entry, type) {
     tableRemoveAllEntries();
     chrome.storage.sync.get({'mapping': {}}, (cache) => {
       const mapKeys = Object.keys(cache.mapping).sort();
-      mapKeys.forEach((key) => tableAddEntry(key, -1, key, cache.mapping[key]));
+      mapKeys.forEach((key) => tableAddEntry(key, -1, key, cache.mapping[key].to, cache.mapping[key].https));
     });
   }
 }
@@ -107,13 +105,19 @@ function addEntry() {
     return;
   }
 
+  const newEntry = {
+    'from': from,
+    'to': to,
+    'https': document.getElementById("newEntry-https").checked,
+  };
+
   // Save it using the Chrome extension storage API.
   chrome.storage.sync.get({'mapping': {}}, (cache) => {
       const mapping = cache.mapping;
       const exists = (from in mapping);
-      mapping[from] = to;
+      mapping[from] = newEntry;
       const position = Object.keys(mapping).sort().indexOf(from);
-      chrome.storage.sync.set({'mapping': mapping}, () => updatePage({'key': from, 'from': from, 'to': to, 'position': position, 'exists': exists}, "add"));
+      chrome.storage.sync.set({'mapping': mapping}, () => updatePage({'key': from, 'from': from, 'to': to, 'position': position, 'exists': exists, 'https': newEntry.https}, "add"));
     }
   );
 }
@@ -122,15 +126,20 @@ function removeEntry(key) {
   // Save it using the Chrome extension storage API.
   chrome.storage.sync.get({'mapping': {}}, (cache) => {
     const mapping = cache.mapping;
-    const to = cache.mapping[key];
     delete mapping[key];
     chrome.storage.sync.set({'mapping': mapping}, () => updatePage({'key': key}, "remove"));
   });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const submitChanges = document.querySelector('#submitChanges');
-  submitChanges.addEventListener('click', addEntry, false);
+  const submitEntry = document.querySelector('#submitEntry');
+  submitEntry.addEventListener('click', addEntry);
+  const entryType = document.querySelector('#newEntry-https');
+  entryType.addEventListener('change', (event) => {
+    const prefix = event.target.checked ? "https://" : "http://";
+    const entryPrefixes = document.getElementsByClassName('newEntry-prefix');
+    [].forEach.call(entryPrefixes, (entryPrefix) => entryPrefix.innerHTML = prefix);
+  });
 
   updatePage();
 });
